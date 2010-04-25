@@ -106,7 +106,7 @@ def parse_tests(lines):
 #print jswrite_simple(code)
 
 if __name__ == '__main__':
-  with open('wiki\\Home.src') as home:
+  with open('Home.src') as home:
     parsed = parse_tests(home.read().split('\n'))
     run_tests(parsed)
     with open('wiki\\Home.wiki', 'w') as wiki:

@@ -1,0 +1,20 @@
+== py2js ==
+
+Welcome to py2js! The py2js library translates Python code into Javascript,
+attempting as close to a one-to-one mapping as is possible. In order to keep the
+generated Javascript highly readable and similar to the original Python code, it
+depends on a small Javascript library which adds a number of pythonic touches to
+Javascript.
+
+=== Function Definitions ===
+
+Python:
+  def test(x):
+      print x
+
+Javascript:
+  function test(x) {
+      print(x);
+  }
+
+	
