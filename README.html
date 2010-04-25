@@ -1,0 +1,328 @@
+<html>
+
+<head>
+<title>py2js README</title>
+</head>
+
+<body>
+
+<h1>py2js - README</h1>
+
+<h3>18/01/2009</h3>
+
+py2js is a tool to assist developers in converting python source code to javascript.  Note only a subset of python is (and will ever be) supported - python code will need to be made somewhat javascript-friendly to be converted by py2js to javascript which performs an equivalent task.
+
+For credits and licenses please see the <a href="#credits">Credits and Licenses</a> section at the
+end of this document
+
+<h2>Contents</h2>
+
+<ul>
+<li><a href="#getstarted">Getting Started</a></li>
+<li><a href="#whatssupported"/>What is supported and what isn't</li>
+<li><a href="#customizing" />Customizing py2js</li>
+<ul>
+<li><a href="#module_equivalents"/>module equivalents</li>
+<li><a href="#py2js_macros"/>overriding py2js with py2js "macros"</li>
+</ul>
+<li><a href="#unit_tests"/>Running unit-tests</li>
+<li><a href="#credits"/>Credits and Licenses</li>
+<li><a href="#history">Appendix - Development History</a></li>
+</ul>
+
+<h2><a name="getstarted"/>Getting started</h2>
+
+<p>
+To convert the python program helloworld.py to javascript:
+</p>
+
+<pre>
+python py2js.py helloworld.py &gt; helloworld.js
+</pre>
+
+<p>
+You can now run helloworld.js using (for example) spidermonkey
+</p>
+
+<p>
+Note:  	Depends on _ast module, and so requires Python2.5 or later.
+	Currently tested with Python 2.5, spidermonkey
+	Targets Javascript 1.5
+</p>
+
+<h2><a name="whatssupported"/>What is supported and what isn't</h2>
+
+<h3>Supported</h3>
+
+<ul>
+<li>control flow (if/while/etc)</li>
+<li>some python built-in functions</li>
+<li>strings, lists, dictionaries and some string/list functionality</li>
+<li>exception handling (raise,except,finally)</li>
+<li>many OO features including class definitions</li>
+<li>modules and module import</li>
+<li>string formatting</li>
+</ul>
+
+<h3>Support planned in future</h3>
+
+<ul>
+<li>imported module location via classpath</li>
+</ul> 
+
+<h3>Not supported, no support planned</h3>
+
+<ul>
+<li>yield</li>
+<li>generator functions</li>
+<li>complete coverage of python operators and built-in functions</li>
+</ul>
+
+<h2><a name="customizing"/>Customizing py2js</h2>
+
+To customize/extend the mapping of built in functions and operators, you can modify the python-&gt;javascript mappings in jsmap.py.  See the comments in this file for advice.
+
+<h3><a name="module_equivalents"/>module equivalents</h3>
+
+<p>
+py2js can be configured with javascript and python equivalent implementations
+of a module.  Place the code under modules/python and modules/javascript and
+configure py2js_modules in jslib.py
+</p>
+<p>
+module equivalents are useful when you need to manually convert a module from
+python to javascript or when a javascript equivalent of a python module
+already exists.
+</p>
+<p>
+when importing a python module into your python program, for py2js to
+correctly include the javascript equivalent code, you'll have to import the
+module using "from <module> import *"
+</p>
+<p>
+for an example of module equivalents, see the MersenneTwister example:
+</p>
+<pre>
+modules/python/mtrandom.py
+modules/javascript/MersenneTwister19937class.js
+... and the test example tests/modules/rng.py
+</pre>
+<p>
+for more details on the MersenneTwister python and javascript implementations
+see section "Credit and Licenses" below.
+</p>
+
+<h3><a name="py2js_macros"/>overriding py2js with py2js "macros"</h3>
+
+<p>
+In some cases py2js will not be able to convert python to javascript.  In
+these situations you can use py2js "macros" to manually control the
+conversion.
+</p>
+<p>
+To embed javascript equivalents into your python program (to allow for cases
+where py2js cannot convert) using the following "macros" 
+</p>
+<p>
+Use a triple-quoted string starting with the string "py2js-verbatim:" to
+supply some javascript that will be exported to the output of py2js verbatim:
+</p>
+<pre>
+"""py2js-verbatim:
+function foo(x) {
+	print(x);
+}
+"""
+</pre>
+
+<p>
+Use string literals "py2js-skip-begin" and "py2js-skip-end" to
+bracket python code which you do not want py2js to attempt to convert:
+</p>
+
+<pre>
+"""py2js-skip-begin"""
+def foo(x):
+	print x
+"""py2js-skip-end"""
+</pre>
+
+<h2><a name="unit_tests"/>Running unit-tests</h2>
+<p>
+Run unit tests using:
+</p>
+<pre>
+./unittest.sh (this sets up PYTHONPATH and runs py2js_test.py)
+</pre>
+<p>
+See the comments in py2js_test.py for more details on how the unit tests work
+</p>
+<p>
+After running py2js_test.py, open the page tests/test.html in your browser to
+see if you get the same results.  py2js_test generates the file
+tests/unittestdata.js which is executed by this web page.
+</p>
+
+<h2><a name="credits"/>Credits and Licenses</h2>
+
+<ul>
+<li>py2js is distributed under the <a href="http://www.opensource.org/licenses/mit-license.php">MIT License</a></li>
+
+<li>Module equivalents example (Pure-python and Javascript implementations of the Mersenne Twister random number generator) are provided (in modules/python/mtrandom.py and modules/Javascript/MersenneTwister19937class.js respectively) under a BSD-style license.
+<p>
+<a href="http://millerideas.com/?p=48">mtrandom (Pure-Python Port)</a>
+</p>
+<pre>
+   Converted to Python by Jeff Miller
+   2007-02-03
+   jwmillerusa (at) gmail (dot) com
+   http://millerideas.com
+
+   =======================================================================
+   Code from CPython's random module is subject to the following:
+   http://www.python.org/psf/license/
+   =======================================================================
+</pre>
+</li>
+<li>
+<a href="http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/VERSIONS/JAVASCRIPT/java-script.html">MersenneTwister19937 (Javascript Port) by Yasuhara Okada</a>
+<pre>
+   original C-program for Mersenne Twister:
+
+   C-program for MT19937, with initialization improved 2002/1/26.
+   Coded by Takuji Nishimura and Makoto Matsumoto.
+
+   Before using, initialize the state by using init_genrand(seed)
+   or init_by_array(init_key, key_length).
+
+   Copyright (C) 1997 - 2002, Makoto Matsumoto and Takuji Nishimura,
+   All rights reserved.
+
+   Redistribution and use in source and binary forms, with or without
+   modification, are permitted provided that the following conditions
+   are met:
+
+     1. Redistributions of source code must retain the above copyright
+        notice, this list of conditions and the following disclaimer.
+
+     2. Redistributions in binary form must reproduce the above copyright
+        notice, this list of conditions and the following disclaimer in the
+        documentation and/or other materials provided with the distribution.
+
+     3. The names of its contributors may not be used to endorse or promote
+        products derived from this software without specific prior written
+        permission.
+
+   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+   A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER
+OR
+   CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+   EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+   PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+   PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+   LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+   Any feedback is very welcome.
+   http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/emt.html
+   email: m-mat @ math.sci.hiroshima-u.ac.jp (remove space)
+</pre>
+</li>
+</ul>
+
+<h2>Using py2js</h2>
+
+<pre>
+
+* py2js maps many python builtin methods and functions to javascript equivalents.
+
+Avoid defining method and function names which match those of python builtin method and function names, because these will also be mapped.
+
+* empty dictionary and list values in python evaluate to false, but the same
+is not true in javascript.  Use explicit tests, eg.
+
+if len(list_or_dict) > 0:
+	# do something with non-empty list/dict
+
+... instead of
+
+if list_or_dict:
+	# do something wit non-empty list/dict
+
+* list and dictionary access which would cause an exception in python, return
+an undefined value in javascript.  Consider guarding access to list and dictionary, eg. use:
+
+if key in dict:
+	val = dict[key]
+except:
+	val = "not found"
+
+... instead of
+
+try:
+	val = dict[key]
+except:
+	val = "not found"
+
+* do not use negative subscripts when accessing arrays
+
+eg. use:
+
+x = ['a','b','c']
+print x[len(x)-1] # prints 'c'
+
+... instead of ...
+
+x = ['a','b','c']
+print x[-1]	  # prints 'c'
+
+* in python 2.5 and earlier, integer division results (by default) in an
+integer.  Use "from __future__ import division" to return a floating point
+result from integer division in python (which matches the javascript
+behaviour).
+
+* do not use + in python to concatenate lists, + does not work on Javascript Arrays in the same way. 
+
+eg use extend:
+
+a = [1,2,3]
+b = [4,5,6]
+c = a[:]
+c.extend(b)
+
+... instead of
+a = [1,2,3]
+b = [4,5,6]
+c = a + b
+
+</pre>
+
+<h2><a name="history"/>Appendix - Development History</h2>
+
+<pre>
+26/10/2008	Initial version
+01/11/2008	Add for ... in ... support, and other stuff
+08/11/2008	Add basic class support, try/except/finally, more operators	
+15/11/2008	Add a few builtin functions, list comprehension
+22/11/2008	Improve support for classes - inheritance and static members
+30/11/2008	Import support part 1 (not yet stable)
+05/12/2008	Import support part 2 (more stable, but...)
+12/12/2008	Run unit tests in browsers, support for del
+20/12/2008	Support for generator classes
+27/12/2008	Some bug fixes.  Support for module equivalents (Mersenne Twister example)
+02/01/2009	Initial support for super(&gt;class&lt;,&gt;instance&lt;).
+11/01/2009	Some clean up.  Add support for string formatting (mostly complete).
+18/01/2009	Completed string formatting.
+</pre>
+
+<h3>Prototypes</h3>
+
+The prototypes sub-directory contains manually created python and javascript
+equivalents to prove concepts
+
+</body>
+</html>
+
