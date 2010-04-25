@@ -67,6 +67,7 @@ class JavascriptBackend(object):
         self.scope = []
         self.module = None
         self.catchvars = []
+        self.skip_header = False
 
     def applyNamespace(self,name,**kwargs):
         namespace = self.namespace
@@ -819,7 +820,7 @@ class JavascriptBackend(object):
             argname=funcdef.argnames[a]
            
             txt+=argname
-        txt += ") "
+        txt += ")"
         self.add(txt)
         e = []
 
@@ -887,12 +888,13 @@ class JavascriptBackend(object):
             header += "__name__ = '"+mdef.namespace+"';\n\n"
             trailer += "\n\n\n__name__ = '"+self.namespace+"';\n\n"
         
-        self.add(header)
+        if not self.skip_header:
+            self.add(header)
 
         if mdef.name=='__main__' or (len(mdef.aliases)==1 and mdef.aliases[0][0]=='*'):
             # "from <module> import *": inline the module completely            
             self.generate(mdef.code,toplevel=True)
-            self.nl()
+            #self.nl()
         else:
             original_namespace = self.namespace
             self.namespace = mdef.namespace
@@ -913,9 +915,9 @@ class JavascriptBackend(object):
         for a in xrange(0,len(printdef.values)):
             if a>0:
                 self.add('+ " " +')
-            self.add('String(')
+            #self.add('String(')
             self.add(self.generate(printdef.values[a]))
-            self.add(')')
+            #self.add(')')
         self.add(');')
 
     def RaiseStatement(self,rdef,**kwargs):
@@ -1163,4 +1165,11 @@ def jswrite(code,pypath):
     jb.generate(code)
     return jb.getCode() 
         
-
+def jswrite_simple(code):
+    global mdict
+    mdict.clear()
+    class_aliases.clear()
+    jb = JavascriptBackend()
+    jb.skip_header = True
+    jb.generate(code)
+    return jb.getCode() 

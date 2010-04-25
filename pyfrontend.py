@@ -63,7 +63,7 @@ class FrontendInternalException(FrontendException):
 
 class GenVisitor(object):
 
-    def __init__(self,module_name,module_path,module_namespace):
+    def __init__(self,module_name,module_path,module_namespace,ignore_imports=False):
         self.uops = { 'Not':'not', 'UAdd':'+', 'USub':'-', 'Invert':'~' }
         self.bops = { 'Eq':"==", 'NotEq':'!=', 'Mult':"*", 'Sub':"-", 'Lt':'<', 'LtE':'<=', 'Gt':'>', 'GtE':'>=', 'Add':'+', 'Mod':'%', 'And':'and', 'Or':'or', 'Div':'/', 'Pow':'**', 'In':'in', 'NotIn':'not in', 'RShift':'>>', 'LShift':'<<', 'BitOr':'|', 'BitXor':'^', 'BitAnd':'&', 'FloorDiv':'//' }
         self.aops = { 'Add':'+=', 'Sub':'-=', 'Mult':'*=', 'Div':'/=', 'Mod':'%=', 'Pow':'**=', 'RShift':'>>=', 'LShift':'<<=', 'BitOr':'|=', 'BitXor':'^=', 'BitAnd':'&=', 'FloorDiv':'//=' }
@@ -71,6 +71,7 @@ class GenVisitor(object):
         self.module_name = module_name
         self.module_path = module_path
         self.module_namespace = module_namespace
+        self.ignore_imports = ignore_imports
         self.scope = []
 
     def parse(self,contents):
@@ -406,67 +407,70 @@ class GenVisitor(object):
 
     def Import(self,ast):
         modules = []
-        for name in ast.names:
-            
-            (modpath,namespace) = self.locateModule(name.name,name.asname)
-            code = None         
-
-            mname = name.name
-            if name.asname and name.asname !=  "":
-                mname = name.asname
-            self.module.addModuleMountPoint(mname,namespace)
-
-            global loaded_modules
-            if namespace not in loaded_modules:
-                try:
-                    code = pyread(modpath,(name.name,modpath,namespace,[]))  
-                except Exception, ex:
-                    raise ex                             
-                modules.append(code)
-                loaded_modules.add(namespace)
+        if not self.ignore_imports:
+            for name in ast.names:
+                
+                (modpath,namespace) = self.locateModule(name.name,name.asname)
+                code = None         
+    
+                mname = name.name
+                if name.asname and name.asname !=  "":
+                    mname = name.asname
+                self.module.addModuleMountPoint(mname,namespace)
+    
+                global loaded_modules
+                if namespace not in loaded_modules:
+                    try:
+                        code = pyread(modpath,(name.name,modpath,namespace,[]))  
+                    except Exception, ex:
+                        raise ex                             
+                    modules.append(code)
+                    loaded_modules.add(namespace)
 
         return modules
 
     def ImportFrom(self,ast):
-        if ast.module == "__future__":
-            return []
-
-        importall = False
-        if len(ast.names)==1 and ast.names[0].name=='*':
-            importall = True        
-        namespace = self.module_namespace
-
-        (modpath,namespace) = self.locateModule(ast.module,'')
-
-        if importall == False:   
-            for name in ast.names:
-                aliasedname = name.name
-                if name.asname and name.asname != "":                
-                    aliasedname = name.asname                
-                
-                unaliasedname = namespace + "." + name.name
-                self.module.aliases.append((aliasedname,unaliasedname))
-        else:
+        if not self.ignore_imports:
+            if ast.module == "__future__":
+                return []
+    
+            importall = False
+            if len(ast.names)==1 and ast.names[0].name=='*':
+                importall = True        
             namespace = self.module_namespace
+    
+            (modpath,namespace) = self.locateModule(ast.module,'')
+    
+            if importall == False:   
+                for name in ast.names:
+                    aliasedname = name.name
+                    if name.asname and name.asname != "":                
+                        aliasedname = name.asname                
+                    
+                    unaliasedname = namespace + "." + name.name
+                    self.module.aliases.append((aliasedname,unaliasedname))
+            else:
+                namespace = self.module_namespace
               
         modules = []
-        global loaded_modules
-        if namespace not in loaded_modules:
-            code = None
-            try:
-                code = pyread(modpath,(ast.module,modpath,namespace))
-            except Exception, ex:
-                # cannot find file, see if there is a "module equivalent"
-                if importall:
-                    for modname in py2js_modules:
-                        if ast.module.endswith(modname):
-                            jspath = join("modules","javascript",py2js_modules[modname]+".js")
-                            jsfile = open(jspath,"r")
-                            jscode = jsfile.read()
-                            return [Verbatim(jscode)]
-                raise ex
-            modules.append(code)     
-            loaded_modules.add(namespace)                   
+        if not self.ignore_imports:
+            global loaded_modules
+            if namespace not in loaded_modules:
+                code = None
+                try:
+                    code = pyread(modpath,(ast.module,modpath,namespace))
+                except Exception, ex:
+                    # cannot find file, see if there is a "module equivalent"
+                    if importall:
+                        for modname in py2js_modules:
+                            if ast.module.endswith(modname):
+                                jspath = join("modules","javascript",py2js_modules[modname]+".js")
+                                jsfile = open(jspath,"r")
+                                jscode = jsfile.read()
+                                return [Verbatim(jscode)]
+                    raise ex
+                modules.append(code)     
+                loaded_modules.add(namespace)                   
         return modules
 
     def locateModule(self,module,asname):
@@ -624,6 +628,10 @@ def pyread(path,module=None):
     file = codecs.open( path, "r", "utf-8" )
     contents = file.read()
     gv = GenVisitor(module[0],module[1],module[2])
+    return gv.parse(contents)
+
+def pyparse(contents):
+    gv = GenVisitor("__main__", "", "", ignore_imports=True)
     return gv.parse(contents)
 
 
