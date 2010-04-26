@@ -1,12 +1,23 @@
-== py2js ==
+{{py2js.jpg|py2js}}
 
-Welcome to py2js! The py2js library translates Python code into Javascript,
-attempting as close to a one-to-one mapping as is possible. In order to keep the
-generated Javascript highly readable and similar to the original Python code, it
-depends on a small Javascript library which adds a number of pythonic touches to
-Javascript.
 
-=== Function Definitions ===
+== Beautiful, Debuggable Javascript ==
+
+There are a few other python-to-javascript compilers available, including
+pyjamas' [[http://pyjs.org/|pyjs]] and Scott Graham's
+[[http://www.skulpt.org/|skulpt]], as well as similar projects like
+[[http://www.mascaraengine.com/|mascara]] and
+[[http://jashkenas.github.com/coffee-script/|coffeescript]]. While we respect
+these libraries, the emphasis of py2js is different.
+
+We believe that Guido's insight - that **code is read more often than it is
+written** - holds true even for generated code. One big resistance to using a
+code generator is that nobody wants to step through a mess of auto-generated
+code in a debugger. We resonate with this so much that the number one goal of
+py2js is to generate code that is not only clean and recognizable, but maps
+one-to-one to the original Python code wherever possible. To accomplish this, we
+employ a pythonic javascript library, pylib.js, which provides the generated
+Javsacript with functions and datatypes that mirror those built into Python.
 
 Python:
   def test(x):
@@ -17,4 +28,98 @@ Javascript:
       print(x);
   }
 
-	
+
+== Developing with Firefox 3+ ==
+
+Firefox supports so many pythonic, forward-looking features with
+Javascript [[https://developer.mozilla.org/en/New_in_JavaScript_1.6|1.6]],
+[[https://developer.mozilla.org/en/New_in_JavaScript_1.7|1.7]] and
+[[https://developer.mozilla.org/en/New_in_JavaScript_1.8|1.8]] that py2js, by
+default, generates both a standard *.js file and a *-ff3.js file for each *.py
+file. This allows web developers who use Firefox to do their primary debugging
+and development with a syntax that maps even more closely to the original source.
+
+
+Python:
+  for key, value in pairs:
+	  self.do_something(key)
+
+Firefox 3+:
+  for each (var [key, value] in pairs) {
+		this.do_something(key);
+	}
+
+Javascript:
+  pairs.forEach(function(key, value) {
+	  this.do_something(key);
+	}, this);
+
+
+== "$" and Interoperability with Javascript Libraries ==
+
+[[http://jquery.com/|jQuery]], [[http://www.prototypejs.org/|Prototype]],
+[[http://mootools.net/|mootools]], [[http://mochikit.com/|mochikit]] and the
+like are so popular and so good at working with the DOM that it makes a lot of
+sense to interoperate with them. However, these libraries make heavy use of the
+"$" character in identifiers, which is not allowed in Python identifiers. For
+the time being, we work around this by replacing "$" with "__S__" in memory
+before feeding the code to Python's parser, then replacing it back to "$" in the
+resulting Javascript code.
+
+Of course, any Python code with "$" in identifiers will not run in the standard
+python interpreter - but the only time you would use it is to access a
+client-side Javascript library, which *also* wouldn't be available in the
+standard python interpreter.
+
+Python:
+  $('#status').html('reading about py2js')
+
+Javascript:
+  $('#status').html('reading about py2js');
+
+
+== Easily Customizable ==
+
+Almost every developer, team and library has a preferred coding style - and it's
+not exactly consistent in the Javascript community. For instance, some
+developers who are familiar with the Prototype library would prefer seeing an
+"each" function instead of forEach and a bind method with "this" passed in as an
+argument, rather than a second parameter to the each() function. Other
+developers would prefer a vanilla for loop with a numerical index variable.
+Developers who are more attuned to performance might prefer the prefix increment
+operator and a variable, which caches the length of pairs.
+
+When it comes to inheritance, even more preferences abound, from the 
+[[https://developer.mozilla.org/en/Core_JavaScript_1.5_Guide/Details_of_the_Object_Model|prototypical inheritance techniques on Mozilla's site]]
+to [[http://bolinfest.com/javascript/inheritance.php|pseudoclassical to functional]]
+and many libraries have their own syntax, including
+[[http://www.prototypejs.org/learn/class-inheritance|Prototype]] and Dean Edwards'
+[[http://code.google.com/p/base2/|base2]].
+
+Because beauty is in the eye of the beholder, we have a system of keyword
+arguments you can use to generate the style of Javascript you like. For
+instance, if you prefer to use Prototype's inheritance mechanism, you can just
+pass in inheritance='prototype'. Or if you prefer indexed for loops with the
+index name prefixed with 'num_', you can pass in for_loops='indexed' and
+for_loop_index='num_%s'.
+
+Python:
+  for key, value in pairs:
+	  self.do_something(key)
+
+Javascript: (with for_loops='indexed', for_loop_index='num_%s')
+  for (var num_pairs = 0; num_pairs < pairs.length; num_pairs++) {
+		var key = pairs[num_pairs][0];
+		var value = pairs[num_pairs][1];
+	  this.do_something(key);
+	}
+
+
+== Work-in-Progress ==
+
+py2js is under active development. While the basic structure is in place and
+usable, thanks to the work of [[http://www.mccarroll.net/|Niall McCarroll]],
+there is still much that can be done to make the generated code mirror the
+original Python more closely, take advantage of more FF3-specific features,
+interoperate better with popular Javascript libraries and be more customizable
+to the coding styles of individual developers.
