@@ -75,6 +75,11 @@ class GenVisitor(object):
         self.scope = []
 
     def parse(self,contents):
+        # We replace $ with __S__ so we can interoperate w/ JS libs that heavily
+        # use "$" in identifiers. If the $ char is in a string or comment,
+        # that's ok too -- these will be replaced back with $ on the other end
+        # along with the identifiers        
+        contents = contents.replace('$', '__S__')
         ast = compile(contents, '<string>', 'exec', _ast.PyCF_ONLY_AST)
         return self.visit(ast)
 

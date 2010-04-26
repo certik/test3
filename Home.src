@@ -8,13 +8,14 @@ pyjamas' [[http://pyjs.org/|pyjs]] and Scott Graham's
 [[http://www.skulpt.org/|skulpt]], as well as similar projects like
 [[http://www.mascaraengine.com/|mascara]] and
 [[http://jashkenas.github.com/coffee-script/|coffeescript]]. While we respect
-these libraries, the emphasis of py2js is different.
+these libraries and some of them outstrip py2js in features, py2js stands out
+from the crowd in it's ability to generate readable code.
 
-We believe that Guido's insight - that **code is read more often than it is
-written** - holds true even for generated code. One big resistance to using a
-code generator is that nobody wants to step through a mess of auto-generated
+Guido's insight - that **code is read more often than it is written** - holds
+true even for generated code. Developers naturally resist the idea of using a
+code generator because nobody wants to step through a mess of auto-generated
 code in a debugger. We resonate with this so much that the number one goal of
-py2js is to generate code that is not only clean and recognizable, but maps
+py2js is to generate code that is not only clean and recognizable, but also maps
 one-to-one to the original Python code wherever possible. To accomplish this, we
 employ a pythonic javascript library, pylib.js, which provides the generated
 Javsacript with functions and datatypes that mirror those built into Python.
@@ -62,7 +63,7 @@ Javascript:
 like are so popular and so good at working with the DOM that it makes a lot of
 sense to interoperate with them. However, these libraries make heavy use of the
 "$" character in identifiers, which is not allowed in Python identifiers. For
-the time being, we work around this by replacing "$" with "__S__" in memory
+the time being, we work around this by replacing "$" with "{{{__S__}}}" in memory
 before feeding the code to Python's parser, then replacing it back to "$" in the
 resulting Javascript code.
 
@@ -107,7 +108,7 @@ Python:
   for key, value in pairs:
 	  self.do_something(key)
 
-Javascript: (with for_loops='indexed', for_loop_index='num_%s')
+Javascript: (for_loops='indexed', for_loop_index='num_%s')
   for (var num_pairs = 0; num_pairs < pairs.length; num_pairs++) {
 		var key = pairs[num_pairs][0];
 		var value = pairs[num_pairs][1];

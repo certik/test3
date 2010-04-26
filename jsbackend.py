@@ -1036,6 +1036,8 @@ class JavascriptBackend(object):
             final_code += entry
             final_code += "\n\n"
         final_code += self.code
+        # see the comment in GenVisitor.parse()
+        final_code = final_code.replace('__S__', '$')
         return final_code
 
     def expand(self,template,parameters,**kwargs):
