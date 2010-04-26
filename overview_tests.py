@@ -14,6 +14,7 @@ documentation pages.
 """
 from pyfrontend import pyparse
 from jsbackend import jswrite_simple
+from difflib import ndiff
 
 def py2js(input):
   return jswrite_simple(pyparse(input))
@@ -21,8 +22,8 @@ def py2js(input):
 def run_tests(parsed):
   for item in parsed:
     if hasattr(item, 'get'):
-      py_code = '\n'.join(item['pytest'])
-      js_expected = '\n'.join(item['jstest'])
+      py_code = '\n'.join(item['pytest'][1:])
+      js_expected = '\n'.join(item['jstest'][1:])
       #print 'Python Code:'
       #print py_code
       #print 'Javascript Code:'
@@ -37,6 +38,8 @@ def run_tests(parsed):
         print js_expected
         print 'Got:'
         print js_actual
+        print 'Diff:'
+        print '\n'.join(ndiff(js_expected.split('\n'), js_actual.split('\n')))
     #else:
     #  print 'No Tests: ' + item
 
@@ -44,23 +47,26 @@ def generate_wiki(parsed):
   wiki = []
   for item in parsed:
     if hasattr(item, 'get'):
-      # Python Example (Wiki Creole 1.0 - pygments)
-      wiki.append('Python:')
-      wiki.append('{{{')
-      wiki.append('#!py')
-      wiki.extend(item['pytest'])
-      wiki.append('}}}')
-      wiki.append('')
+      # Render each example using Wiki Creole 1.0 - pygments
+      for (testname, testtype) in [('pytest', 'py'), ('fftest', 'js'), ('jstest', 'js')]:
+        wiki.extend(gen_wiki_example(item[testname], testtype))
       
-      # Javascript Example (Wiki Creole 1.0 - pygments)
-      wiki.append('Javascript:')
-      wiki.append('{{{')
-      wiki.append('#!js')
-      wiki.extend(item['jstest'])
-      wiki.append('}}}')
     else:
       wiki.append(item)
   return wiki
+
+def gen_wiki_example(ex_lines, ex_language):
+  wiki_ex = []
+  if len(ex_lines):
+    wiki_ex.extend([
+      ex_lines[0],
+      '{{{',
+      '#!' + ex_language
+    ])
+    wiki_ex.extend(ex_lines[1:])
+    wiki_ex.append('}}}')
+    wiki_ex.append('')
+  return wiki_ex
   
 def parse_tests(lines):
   """
@@ -72,23 +78,32 @@ def parse_tests(lines):
   parsed = []
   in_py_test = False
   in_js_test = False
+  in_ff_test = False
   py_indent = None
   js_indent = None
+  ff_indent = None
   test = None
   
   for line in lines:
     if line.startswith('Python:'):
       in_py_test = True
-      test = { 'pytest': [], 'jstest': [] }
+      test = { 'pytest': [], 'jstest': [], 'fftest': [] }
       parsed.append(test)
+      test['pytest'].append(line)
     elif line.startswith('Javascript:'):
       in_js_test = True
+      test['jstest'].append(line)
+    elif line.startswith('Firefox 3+:'):
+      in_ff_test = True
+      test['fftest'].append(line)
     elif line == '' or not line[0].isspace():
       parsed.append(line)
       in_py_test = False
       in_js_test = False
+      in_ff_test = False
       py_indent = None
       js_indent = None
+      ff_indent = None
     else:
       if in_py_test:
         if py_indent is None:
@@ -98,6 +113,10 @@ def parse_tests(lines):
         if js_indent is None:
           js_indent = len(line) - len(line.lstrip())
         test['jstest'].append(line[js_indent:])
+      elif in_ff_test:
+        if ff_indent is None:
+          ff_indent = len(line) - len(line.lstrip())
+        test['fftest'].append(line[ff_indent:])
   
   return parsed
 

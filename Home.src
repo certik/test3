@@ -21,12 +21,16 @@ employ a pythonic javascript library, pylib.js, which provides the generated
 Javsacript with functions and datatypes that mirror those built into Python.
 
 Python:
-  def test(x):
-      print x
+  def get_keys_if_foo(x, y):
+      dct = {'foo': 'bar'}
+      if dct.has_key('foo'):
+          return dct.keys()
 
 Javascript:
-  function test(x) {
-      print(x);
+  function get_keys_if_foo(x, y) {
+      var dct = dict({'foo': 'bar'});
+      if (dct.has_key('foo'))
+          return dct.keys();
   }
 
 
@@ -43,17 +47,17 @@ and development with a syntax that maps even more closely to the original source
 
 Python:
   for key, value in pairs:
-	  self.do_something(key)
+    self.do_something(key)
 
 Firefox 3+:
   for each (var [key, value] in pairs) {
-		this.do_something(key);
-	}
+    this.do_something(key);
+  }
 
 Javascript:
   pairs.forEach(function(key, value) {
-	  this.do_something(key);
-	}, this);
+    this.do_something(key);
+  }, this);
 
 
 == "$" and Interoperability with Javascript Libraries ==
@@ -81,7 +85,7 @@ Javascript:
 
 == Easily Customizable ==
 
-Almost every developer, team and library has a preferred coding style - and it's
+Almost every developer has a preferred coding style - and it's
 not exactly consistent in the Javascript community. For instance, some
 developers who are familiar with the Prototype library would prefer seeing an
 "each" function instead of forEach and a bind method with "this" passed in as an
@@ -98,7 +102,7 @@ and many libraries have their own syntax, including
 [[http://code.google.com/p/base2/|base2]].
 
 Because beauty is in the eye of the beholder, we have a system of keyword
-arguments you can use to generate the style of Javascript you like. For
+arguments you can use to generate the style of Javascript you prefer. For
 instance, if you prefer to use Prototype's inheritance mechanism, you can just
 pass in inheritance='prototype'. Or if you prefer indexed for loops with the
 index name prefixed with 'num_', you can pass in for_loops='indexed' and
@@ -106,21 +110,21 @@ for_loop_index='num_%s'.
 
 Python:
   for key, value in pairs:
-	  self.do_something(key)
+    self.do_something(key)
 
 Javascript: (for_loops='indexed', for_loop_index='num_%s')
   for (var num_pairs = 0; num_pairs < pairs.length; num_pairs++) {
-		var key = pairs[num_pairs][0];
-		var value = pairs[num_pairs][1];
-	  this.do_something(key);
-	}
+    var key = pairs[num_pairs][0];
+    var value = pairs[num_pairs][1];
+    this.do_something(key);
+  }
 
 
 == Work-in-Progress ==
 
-py2js is under active development. While the basic structure is in place and
-usable, thanks to the work of [[http://www.mccarroll.net/|Niall McCarroll]],
-there is still much that can be done to make the generated code mirror the
-original Python more closely, take advantage of more FF3-specific features,
+py2js is under active development. The basic structure is in place and
+usable, thanks to the work of [[http://www.mccarroll.net/|Niall McCarroll]].
+However, there is still much that can be done to make the generated code mirror
+the original Python more closely, take advantage of more FF3-specific features,
 interoperate better with popular Javascript libraries and be more customizable
 to the coding styles of individual developers.

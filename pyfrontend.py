@@ -32,7 +32,6 @@ import _ast
 from os.path import split, splitext, join
 import codecs
 import sys
-from jslib import py2js_modules
 
 loaded_modules = set()
 global initial_module_dir
@@ -461,19 +460,7 @@ class GenVisitor(object):
         if not self.ignore_imports:
             global loaded_modules
             if namespace not in loaded_modules:
-                code = None
-                try:
-                    code = pyread(modpath,(ast.module,modpath,namespace))
-                except Exception, ex:
-                    # cannot find file, see if there is a "module equivalent"
-                    if importall:
-                        for modname in py2js_modules:
-                            if ast.module.endswith(modname):
-                                jspath = join("modules","javascript",py2js_modules[modname]+".js")
-                                jsfile = open(jspath,"r")
-                                jscode = jsfile.read()
-                                return [Verbatim(jscode)]
-                    raise ex
+                code = pyread(modpath,(ast.module,modpath,namespace))
                 modules.append(code)     
                 loaded_modules.add(namespace)                   
         return modules

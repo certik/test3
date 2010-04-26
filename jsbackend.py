@@ -28,7 +28,6 @@
 
 from parsetree import *
 from jsmap import binaryOps,unaryOps,assignOps,mappedFuncs
-from jslib import *
 
 mdict = {}
 class_aliases = {}
@@ -60,7 +59,6 @@ class JavascriptBackend(object):
         self.code = ''
         self.indent = 0
         self.indentstr = '    '
-        self.jslib_support = {}
         self.varcount = 0
         self.dependencies = []
         self.namespace = "__main__"
@@ -152,12 +150,6 @@ class JavascriptBackend(object):
             op = binaryOps[op]
         else:
             raise BackendNotImplementedException("Binary Operation("+op+")")
-        dependencies = []
-        if isinstance(op,tuple):
-            dependencies = op[1]
-            op = op[0]
-        for dependency in dependencies:
-            self.addJslibSupport(dependency)
         if op.find("%1") == -1 and op.find("%2") == -1:
             op = "%1 "+op+" %2"
         txt = ''
@@ -171,7 +163,7 @@ class JavascriptBackend(object):
         return txt
 
     def DictionaryValue(self,dictv,**kwargs):
-        txt = '{'
+        txt = 'dict({'
         nr = len(dictv.keyvalues)
         for idx in xrange(0,nr):
             if idx > 0:
@@ -179,8 +171,8 @@ class JavascriptBackend(object):
             (key,value) = dictv.keyvalues[idx]
             ktxt = self.generate(key)
             vtxt = self.generate(value)
-            txt += ktxt + ":" + vtxt
-        txt += '}'
+            txt += ktxt + ": " + vtxt
+        txt += '})'
         return txt       
 
     def FunctionCall(self,fcalldef,**extraargs):
@@ -204,7 +196,6 @@ class JavascriptBackend(object):
         if len(keyvalues):
             dv = DictionaryValue(keyvalues)
             dvtxt = 'new Kwarg('+self.DictionaryValue(dv)+')'
-            self.addJslibSupport('Kwarg')
         # search for a function mapping, starting with the qualified version
         template = fname
 
@@ -217,18 +208,7 @@ class JavascriptBackend(object):
         for name in [qfname,fname]:       
  
             if name in mappedFuncs:
-
-                dependencies = []
-
                 template = mappedFuncs[name]
-
-                if isinstance(template,tuple):
-                    dependencies = template[1]
-                    template = template[0]
-                
-                for libfunc in dependencies:
-                    self.addJslibSupport(libfunc)
-
                 if template == None:
                     raise BackendNotImplementedException("Function/Method:" + name)
                 else:
@@ -342,12 +322,6 @@ class JavascriptBackend(object):
             op = unaryOps[op]
         else:
             raise BackendNotImplementedException("Unary Operation("+op+")")
-        dependencies = []
-        if isinstance(op,tuple):
-            dependencies = op[1]
-            op = op[0]
-        for dependency in dependencies:
-            self.addJslibSupport(dependency)
         txt += (op+' ')
         txt += self.generate(uop.arg)
         if not 'toplevel' in kwargs:
@@ -375,9 +349,11 @@ class JavascriptBackend(object):
         if not isinstance(target,AttributeLookup):
             self.declare(adef.target)
         varname = self.generate(target)                        
-        exprtxt = self.generate(adef.expr,toplevel=True) 
+        exprtxt = self.generate(adef.expr,toplevel=True)
+        if target.first:
+            self.add('var ')
         self.add(varname)
-        self.add('=')
+        self.add(' = ')
         self.add(exprtxt)
         self.add(';')
        
@@ -459,18 +435,13 @@ class JavascriptBackend(object):
         else:
             print str(assignOps)
             raise BackendNotImplementedException("Augmented Assignment Operation("+op+")")
-        dependencies = []
-        if isinstance(op,tuple):
-            dependencies = op[1]
-            op = op[0]
-        for dependency in dependencies:
-            self.addJslibSupport(dependency)
         txt = self.expand(op,[vtxt,etxt])
         self.add(txt+";")
 
     def Block(self,block,**kwargs):
+        brace = not 'optional_braces' in kwargs or len(block.statements) > 1
         if not 'toplevel' in kwargs:
-            self.openBlock()
+            self.openBlock(brace)
         if 'extras' in kwargs:
             for e in kwargs['extras']:
                 self.add(e)
@@ -481,7 +452,7 @@ class JavascriptBackend(object):
             if a != len(block.statements)-1:
                 self.nl()
         if not 'toplevel' in kwargs:
-            self.closeBlock()
+            self.closeBlock(brace)
 
     def BreakStatement(self,breakdef,**kwargs):
         self.add('break;')
@@ -778,7 +749,6 @@ class JavascriptBackend(object):
 
     def ForInStatement(self,fordef,**kwargs):
         self.declare(fordef.target)
-        self.addJslibSupport('Generator')
         tmp = self.genTmpVarName("container")
         a = AssignmentStatement(VarName(tmp),fordef.container)
         self.generate(a)
@@ -816,7 +786,7 @@ class JavascriptBackend(object):
         argc = len(funcdef.argnames)
         for a in xrange(0,argc):
             if a>0:
-               txt += ","
+               txt += ", "
             argname=funcdef.argnames[a]
            
             txt+=argname
@@ -836,8 +806,7 @@ class JavascriptBackend(object):
             tmpv_len = self.genTmpVarName()
             e += ['var ' + tmpv_len + '= arguments.length;']
     
-        if funcdef.kwarg:        
-            self.addJslibSupport('Kwarg')
+        if funcdef.kwarg:
             tmpv_lastarg = self.genTmpVarName()
             e += ['var ' + tmpv_lastarg + '= arguments[arguments.length-1];']
             e += ['var ' + funcdef.kwarg + ' = {};']
@@ -868,7 +837,7 @@ class JavascriptBackend(object):
                 self.add("else if (")
             self.add(self.generate(cond,toplevel=True))
             self.add(")")
-            self.generate(block)
+            self.generate(block, optional_braces=True)
         if ifdef.elseblock:
             self.add("else ")
             self.generate(ifdef.elseblock)            
@@ -986,14 +955,14 @@ class JavascriptBackend(object):
     def declare(self,target):
         walker = VarNameWalker()
         target.walk(walker)
-        varnames = walker.getVarNames()
-        declares = []
-        for varname in varnames:
-            if not self.isGlobal(varname):
-                declares.append(varname)
-        decl = DeclareStatement(declares)
-        self.generate(decl)
-        self.nl()      
+        #varnames = walker.getVarNames()
+        #declares = []
+        #for varname in varnames:
+        #    if not self.isGlobal(varname):
+        #        declares.append(varname)
+        #decl = DeclareStatement(declares)
+        #self.generate(decl)
+        #self.nl()      
 
     def nl(self):
         self.add('\n')
@@ -1009,16 +978,18 @@ class JavascriptBackend(object):
         self.indent += num 
         return self      
 
-    def openBlock(self):
-        self.add(" {")
+    def openBlock(self, brace=True):
+        if brace:
+            self.add(' {')
         self += 1
         self.nl()
         return self
 
-    def closeBlock(self):
+    def closeBlock(self, brace=True):
         self -= 1
-        self.nl()
-        self.add("}")
+        if brace:
+            self.nl()
+            self.add("}")
         return self
 
     def __sub__(self,num):
@@ -1026,19 +997,8 @@ class JavascriptBackend(object):
         return self
 
     def getCode(self):
-        final_code = ''
-        for package in self.jslib_support:
-            entry = py2js_lib[package]
-            if entry.startswith("file:"):
-                path = entry[5:]
-                f = open(path,"r")
-                entry = f.read()
-            final_code += entry
-            final_code += "\n\n"
-        final_code += self.code
         # see the comment in GenVisitor.parse()
-        final_code = final_code.replace('__S__', '$')
-        return final_code
+        return self.code.replace('__S__', '$')
 
     def expand(self,template,parameters,**kwargs):
         # check to see if there is a target object (or class) associated with the call
@@ -1129,9 +1089,6 @@ class JavascriptBackend(object):
             self.add(dependency)
             self.nl()
         self.dependencies = []
-   
-    def addJslibSupport(self,package):
-        self.jslib_support[package] = True
 
     def genTmpVarName(self,prefix=''):
         self.varcount += 1

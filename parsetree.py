@@ -238,6 +238,7 @@ class VarName(Expr):
 
     def __init__(self,varname):
         self.varname = varname
+        self.first = False
         Expr.__init__(self)
 
     def __repr__(self):
@@ -663,7 +664,9 @@ class VarNameWalker(object):
 
     def begin(self,node):
         if isinstance(node,VarName):
-            self.varnames.append(node.varname)
+            if not node.varname in self.varnames:
+                self.varnames.append(node.varname)
+                node.first = True
     
     def end(self,node):
         pass
