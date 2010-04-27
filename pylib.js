@@ -112,17 +112,6 @@ $import.pylib = {
     return s;
   },
   
-  sort3: function(lst,fn,ky,rv) {
-    sfn = function(a,b) {
-      if (!rv) {
-          return fn(ky(a),ky(b));
-      } else {
-          return fn(ky(b),ky(a));
-      }    
-    }
-    lst.sort(sfn);
-  },
-  
   rstrip: function(str,chars) {
     var i = str.length-1;    
     while(i >= 0) {
@@ -163,13 +152,6 @@ $import.pylib = {
         total += list[i];
     }    
     return total;
-  },
-  
-  extend: function(list1,list2) {
-    var i;
-    for(i=0;i<list2.length;i++) {
-        list1.push(list2[i]);
-    }    
   },
   
   minmax: function(list,minNotMax) {
@@ -380,40 +362,98 @@ $import.pylib = {
   };
   pylib.Generator = Generator;
   
-  function dict(obj) {
-    // RESEARCH: if we can hack the setattr reliably across all browsers
-    // i.e. "this.__inner = obj" and repointering getattr/setattr to __inner
-    // if not, we're in danger of keys taking precedence over dict methods
-    
-    // the alternative is to replace [] notation with .set() and .get()
-    // (with an option to make it getattr/setattr() for increased compatibility
-    // but decreased readability) - but we'd have to do the same for lists and
-    // tuples b/c they all use [] syntax and there's no way to differentiate
-    
-    // the other alternative is to fall back to functional-style calls, as Niall
-    // had, instead of dot-notation (i.e. "Dict.keys(dct)" or just "keys(dct)"),
-    // but this gets ambiguous real fast, is a significant divergence from
-    // the py src and isn't compatible w/ python classes/subclasses that define
-    // the same methods
-    for (var key in obj) {
-      this[key] = obj[key];
+  
+  function list(arr) {
+    // make 'new' optional
+    if (!(this instanceof list))
+      return new list(arr);
+    this._arr = arr;
+  }
+  
+  list.prototype.append = function(value) {
+    this._arr.push(value);
+  }
+  
+  list.prototype.sort = function(cmp, key, reverse) {
+    if (reverse === undefined)
+      reverse = false;
+    if (key === undefined) {
+      this._arr.sort(cmp);
+    }
+    else {
+      sort_func = function(a, b) {
+        if (!reverse) {
+          return cmp(key(a), key(b));
+        } else {
+          return cmp(key(b), key(a));
+        }
+      }
+      this._arr.sort(sort_func);
     }
   }
   
+  list.prototype.extend = function(list2) {
+    var list2_len = list2.length;
+    for (var i = 0; i < list2_len; ++i)
+      this._arr.push(list2[i]);
+  }
+  
+  
+  function dict(obj) {
+    // make 'new' optional
+    if (!(this instanceof dict))
+      return new dict(obj);
+    this._obj = obj || {};
+  }
+  
+  dict.prototype.get = function(key, $default) {
+    return key in this._obj ? this._obj[key] : $default;
+  }
+  
+  dict.prototype.set = function(key, val) {
+    this._obj[val] = key;
+  }
+  
+  dict.prototype.clear = function() {
+    this._obj = {};
+  }
+  
+  dict.prototype.items = function() {
+    var items = [];
+    for (var key in this._obj) {
+      items.push([key, this._obj[key]]);
+    }
+    return list(items);
+  }
+  
   dict.prototype.keys = function() {
-    var result = [];
-    for (var k in this) {
-        result.push(k);
-    }    
-    return result;
+    var keys = [];
+    for (var k in this._obj)
+      keys.push(k);
+    return list(keys);
   };
   
+  dict.prototype.values = function() {
+    var values = [];
+    for (var k in this._obj)
+      values.push(this._obj[k]);
+    return list(values);
+  }
+  
+  dict.prototype.setdefault = function(key, $default) {
+    return key in this._obj ? this._obj[key] : this._obj[key] = $default;
+  }
+  
   dict.prototype.has_key = function(key) {
-    for (var k in this)
-      if (k == key)
-        return true;
-    return false;
+    return key in this._obj;
   };
+  
+  dict.prototype.__delattr__ = function(key) {
+    delete this._obj[key];
+  }
+  
+  // TODO: prove that there's a sufficiently x-browser way to do setters
+  // and implement a __len__ property OR make all such properties methods
   
   pylib.dict = dict;
 })();

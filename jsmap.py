@@ -118,22 +118,21 @@ assignOps = {
 #   
 
 mappedFuncs = { 
-# lists
-    'len' : 'len(%1)',
-    '.append' : 'push',
+# built-in functions
     'sum' : 'sum',
     'map' : 'map',
     'reduce' : 'reduce',
     'zip' : 'zip',
     'filter' : 'filter',
+    'xrange.2' : 'xrange2(%1,%2)',
+# sequences
+    'len' : 'len(%1)',
     'min' : 'minmax(%1,true)',
     'max' : 'minmax(%1,false)',
-    '.sort.0' : 'sort',
-    '.sort.1' : 'sort',
-    '.sort.2' : 'sort3(%0,%1,%2,false)',
-    '.sort.3' : 'sort3(%0,%1,%2,%3)',
-    'xrange.2' : 'xrange2(%1,%2)',
-    '.extend' : 'extend(%0,%1)',
+#lists
+    '.append' : 'push',
+    '.sort' : 'sort',
+    '.extend' : 'extend',
 # conversion
     'str' : 'str(%1)',
     'int' : '$int(%1)',

@@ -130,3 +130,4 @@ if __name__ == '__main__':
     run_tests(parsed)
     with open('wiki\\Home.wiki', 'w') as wiki:
       wiki.write('\n'.join(generate_wiki(parsed)))
+      print 'generated: ' + '\n'.join(generate_wiki(parsed))
