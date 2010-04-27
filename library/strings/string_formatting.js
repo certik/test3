@@ -185,7 +185,7 @@ function py2js_apply_format(fmt,values,counter) {
                 }
             }
             result = absval.toExponential(precision);
-            var plus = result.indexOf('e')
+            var plus = result.indexOf('e');
             if (plus != -1) {
                 var s = result.slice(plus+2);
                 if (s.length == 1) {
@@ -222,6 +222,7 @@ function py2js_apply_format(fmt,values,counter) {
         signchar = null;    
     }
 
+    var w;
     if (width != -1) {
         w = result.length;
         if (signchar) {
