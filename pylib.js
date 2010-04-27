@@ -368,11 +368,12 @@ $import.pylib = {
     if (!(this instanceof list))
       return new list(arr);
     this._arr = arr;
+    return undefined;
   }
   
   list.prototype.append = function(value) {
     this._arr.push(value);
-  }
+  };
   
   list.prototype.sort = function(cmp, key, reverse) {
     if (reverse === undefined)
@@ -381,22 +382,22 @@ $import.pylib = {
       this._arr.sort(cmp);
     }
     else {
-      sort_func = function(a, b) {
+      var sort_func = function(a, b) {
         if (!reverse) {
           return cmp(key(a), key(b));
         } else {
           return cmp(key(b), key(a));
         }
-      }
+      };
       this._arr.sort(sort_func);
     }
-  }
+  };
   
   list.prototype.extend = function(list2) {
     var list2_len = list2.length;
     for (var i = 0; i < list2_len; ++i)
       this._arr.push(list2[i]);
-  }
+  };
   
   
   function dict(obj) {
@@ -404,19 +405,20 @@ $import.pylib = {
     if (!(this instanceof dict))
       return new dict(obj);
     this._obj = obj || {};
+    return undefined;
   }
   
   dict.prototype.get = function(key, $default) {
     return key in this._obj ? this._obj[key] : $default;
-  }
+  };
   
   dict.prototype.set = function(key, val) {
     this._obj[val] = key;
-  }
+  };
   
   dict.prototype.clear = function() {
     this._obj = {};
-  }
+  };
   
   dict.prototype.items = function() {
     var items = [];
@@ -424,7 +426,7 @@ $import.pylib = {
       items.push([key, this._obj[key]]);
     }
     return list(items);
-  }
+  };
   
   dict.prototype.keys = function() {
     var keys = [];
@@ -438,11 +440,11 @@ $import.pylib = {
     for (var k in this._obj)
       values.push(this._obj[k]);
     return list(values);
-  }
+  };
   
   dict.prototype.setdefault = function(key, $default) {
     return key in this._obj ? this._obj[key] : this._obj[key] = $default;
-  }
+  };
   
   dict.prototype.has_key = function(key) {
     return key in this._obj;
@@ -450,7 +452,7 @@ $import.pylib = {
   
   dict.prototype.__delattr__ = function(key) {
     delete this._obj[key];
-  }
+  };
   
   // TODO: prove that there's a sufficiently x-browser way to do setters
   // and implement a __len__ property OR make all such properties methods
