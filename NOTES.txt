@@ -1,0 +1,39 @@
+This file contains some notes that might help you find your way around
+in the source code for this project.
+
+Folder 'library' contains a single file
+'/strings/string_formatting.js'.  This file contains functions, with
+name prefix 'py2js_', related I think to the formatting of strings.
+
+Folder 'modules' contains subfolders 'javascript' and 'python'.
+
+Folder 'modules/javascript' contains a single file
+'MersenneTwister19937class.js'
+
+Folder 'modules/python' contains an empty '__init__.py' and also
+'mtrandom.py'.
+
+The files in 'modules' contain implementations of a Mersenne Twister
+random number generator.
+
+Folder 'tests' contains tests.  I'll discuss that later.
+
+The top level folder also contains some files.  Here are the source
+code files:
+
+jsbackend.py
+
+jsmap.py
+
+overview_tests.py
+
+parsetree.py
+
+py2js.py
+
+py2js_test.py
+
+pyfrontend.py
+
+pylib.js: A library of javascript code to provide an equivalent to
+python built-in functions and methods.
