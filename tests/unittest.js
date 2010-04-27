@@ -24,7 +24,7 @@ function tests_start() {
 function tests_end() {
 }
 
-jsresults = "";
+var jsresults = "";
 
 function test(path) {
 	var jsurl = path + ".js";
@@ -38,10 +38,10 @@ function test(path) {
 
 	var jscode = fetch_url(jsurl);
 	
-	print = function(str) {
+	var print = function(str) {
 		jsresults += str;
 		jsresults += "\n";
-	}
+	};
 
 	jsresults = "";
 	eval(jscode);
@@ -53,7 +53,7 @@ function test(path) {
 		}
 	}
 
-	var pyresults = fetch_url(pyouturl)
+	var pyresults = fetch_url(pyouturl);
 
 	document.write(path + ":" + (jsresults===pyresults?"PASS":"FAIL") + "\n");
 }
