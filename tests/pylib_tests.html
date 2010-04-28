@@ -1,0 +1,46 @@
+<!doctype html>
+  <html>
+  <head>
+  <title>pylib.js tests</title>
+  <script src="json2.js"></script>
+  <script src="pylib.js"></script>
+  <script src="pylib_tests.json"></script>
+  <script>
+
+function test() {
+  eval($from('pylib').$import('*'));
+  
+  var msg = '';
+  var nTests = tests.length;
+  for (var nTest = 0; nTest < nTests; ++nTest) {
+    var test = tests[nTest];
+    document.getElementById('test_output').innerHTML += '<pre>&gt;&gt;&gt; ' + test.code + '\n' + test.result + '</pre>';
+    
+    try {
+      var actual_result = eval(test.code);
+      actual_result = JSON.stringify(actual_result);
+    }
+    catch(e) {
+      var actual_result = 'Error: ' + e.message;
+    }
+    
+    if (actual_result == test.result)
+      msg = '<span class="pass">Passed.</span>';
+    else
+      msg = '<span class="fail">Failed.</span> Actual result: ' + actual_result + '.';
+    document.getElementById('test_output').innerHTML += msg + '<br>';
+  }
+}
+
+</script>
+<style>
+  .pass { color: green; font-weight: bold }
+  .fail { color: red; font-weight: bold }
+  pre { background-color: #eee; padding-bottom: 0; margin-bottom: 0 }
+</style>
+</head>
+<body onload="test()">
+  Running tests:
+  <div id="test_output"></div>
+</body>
+</html>

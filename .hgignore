@@ -1,3 +1,4 @@
 syntax: glob
+komodo_proj.kpf
 *.pyc
 *\.svn\*
